@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gradient Descent Visualization</title>
+    <!-- Load external libraries -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Styling -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .plot {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .param-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: inline-block;
+            width: 180px;
+        }
+        input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .step-info {
+            background-color: #e9f7ef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .math {
+            font-style: italic;
+        }
+        .error {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gradient Descent Visualization</h1>
+    
+    <div class="error" id="error-message"></div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>What is Gradient Descent?</h2>
+            <p>Gradient descent is an optimization algorithm used to find the minimum of a function by iteratively moving in the direction of steepest descent (negative of the gradient).</p>
+            
+            <div class="controls">
+                <h3>Function Parameters</h3>
+                <p class="math">f(w<sub>1</sub>, w<sub>2</sub>) = a·w<sub>1</sub>² + b·w<sub>2</sub>² + c·w<sub>1</sub>w<sub>2</sub> + d·w<sub>1</sub> + e·w<sub>2</sub> + f</p>
+                
+                <div class="param-group">
+                    <label for="param-a">a (w₁² coefficient):</label>
+                    <input type="number" id="param-a" value="1" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label for="param-b">b (w₂² coefficient):</label>
+                    <input type="number" id="param-b" value="1" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label for="param-c">c (w₁w₂ coefficient):</label>
+                    <input type="number" id="param-c" value="0" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label for="param-d">d (w₁ coefficient):</label>
+                    <input type="number" id="param-d" value="0" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label for="param-e">e (w₂ coefficient):</label>
+                    <input type="number" id="param-e" value="0" step="0.1">
+                </div>
+                <div class="param-group">
+                    <label for="param-f">f (constant):</label>
+                    <input type="number" id="param-f" value="0" step="0.1">
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h3>Algorithm Parameters</h3>
+                <div class="param-group">
+                    <label for="start-w1">Starting w₁:</label>
+                    <input type="number" id="start-w1" value="2" step="0.5">
+                </div>
+                <div class="param-group">
+                    <label for="start-w2">Starting w₂:</label>
+                    <input type="number" id="start-w2" value="2" step="0.5">
+                </div>
+                <div class="param-group">
+                    <label for="learning-rate">Learning Rate:</label>
+                    <input type="number" id="learning-rate" value="0.1" min="0.01" max="1" step="0.01">
+                </div>
+                <div class="param-group">
+                    <label for="max-steps">Max Steps:</label>
+                    <input type="number" id="max-steps" value="20" min="1" max="100" step="1">
+                </div>
+            </div>
+            
+            <button id="run-button">Run Gradient Descent</button>
+            <button id="preset-1">Convex Function</button>
+            <button id="preset-2">Saddle Point</button>
+            <button id="preset-3">Shifted Minimum</button>
+            
+            <div class="step-info">
+                <h3>Partial Derivatives (Gradient)</h3>
+                <p class="math">∂f/∂w₁ = 2a·w₁ + c·w₂ + d</p>
+                <p class="math">∂f/∂w₂ = 2b·w₂ + c·w₁ + e</p>
+                
+                <h3>Update Rules</h3>
+                <p class="math">w₁_new = w₁_old - learning_rate × ∂f/∂w₁</p>
+                <p class="math">w₂_new = w₂_old - learning_rate × ∂f/∂w₂</p>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Visualizations</h2>
+            <div id="surface-plot" class="plot"></div>
+            <div id="contour-plot" class="plot"></div>
+            
+            <h3>Step Information</h3>
+            <div id="current-step-info"></div>
+            
+            <h3>Step History</h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table id="step-table">
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>w₁</th>
+                            <th>w₂</th>
+                            <th>f(w₁,w₂)</th>
+                            <th>∂f/∂w₁</th>
+                            <th>∂f/∂w₂</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Will be filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load custom script -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
